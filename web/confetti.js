@@ -1,7 +1,7 @@
 // Small canvas confetti. Hand-written instead of a library, so the app loads
 // no third-party script and keeps working offline.
 
-const COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#c77dff', '#ff9f45'];
+const COLORS = ['#ff7a1a', '#ffa04d', '#ffd23f', '#ff2e88', '#2ef2ff', '#b6ff3b'];
 
 let canvas = null;
 let ctx = null;

@@ -1,21 +1,26 @@
 :root {
-  --bg: #fdf8f3;
-  --surface: #ffffff;
-  --text: #2b2420;
-  --muted: #8a7f78;
-  --border: #e8ddd3;
-  --border-strong: #d6c6b8;
-  --done: #3fa86b;
-  --done-light: #5cc98a;
-  --done-dark: #2a7a4c;
-  --done-text: #ffffff;
+  --bg: #0c0a0f;
+  --surface: #18141d;
+  --text: #f5ece4;
+  --muted: #8f8496;
+  --border: #2a2330;
+  --border-strong: #060508;
+  --done: #ff7a1a;
+  --done-light: #ffa04d;
+  --done-dark: #a84600;
+  --done-text: #1a0d00;
+  --glow: rgb(255 122 26 / 0.6);
+  --neon-pink: #ff2e88;
+  --neon-cyan: #2ef2ff;
+  --neon-yellow: #ffd23f;
   --spring: cubic-bezier(0.3, 1.6, 0.5, 1);
-  --error: #c0392b;
+  --error: #ff4d6d;
   --radius: 1.5rem;
   --gap: 1rem;
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
+  color-scheme: dark;
 }
 
 * {
@@ -25,7 +30,8 @@
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--bg);
+  /* A warm orange haze at the top, fading into the dark. */
+  background: radial-gradient(ellipse 120% 60% at 50% 0%, #2b1306, var(--bg) 70%) fixed var(--bg);
 }
 
 main {
@@ -66,6 +72,7 @@ input {
   border: 2px solid var(--border);
   border-radius: 0.75rem;
   background: var(--surface);
+  color: inherit;
 }
 
 .profiles {
@@ -96,6 +103,8 @@ header {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--done-light);
+  text-shadow: 0 0 12px var(--glow);
 }
 
 #date::first-letter {
@@ -154,11 +163,15 @@ header {
   background: linear-gradient(145deg, var(--done-light), var(--done));
   border-color: var(--done);
   color: var(--done-text);
-  box-shadow: 0 6px 0 var(--done-dark);
+  box-shadow:
+    0 6px 0 var(--done-dark),
+    0 0 28px var(--glow);
 }
 
 .goal[aria-pressed='true']:active {
-  box-shadow: 0 2px 0 var(--done-dark);
+  box-shadow:
+    0 2px 0 var(--done-dark),
+    0 0 28px var(--glow);
 }
 
 .goal-icon {
@@ -200,8 +213,8 @@ header {
   height: 1.75rem;
   font-size: 1rem;
   border-radius: 50%;
-  background: var(--surface);
-  color: var(--done);
+  background: var(--bg);
+  color: var(--done-light);
   transform: scale(0) rotate(-90deg);
   transition: transform 0.4s var(--spring);
 }
@@ -221,8 +234,11 @@ header {
 .ripple {
   position: absolute;
   inset: -2px;
-  border: 4px solid var(--done);
+  border: 4px solid var(--done-light);
   border-radius: inherit;
+  box-shadow:
+    0 0 20px var(--glow),
+    inset 0 0 20px var(--glow);
   pointer-events: none;
 }
 
@@ -232,8 +248,10 @@ header {
   left: 50%;
   font-size: 1.75rem;
   font-weight: 800;
-  color: var(--done-dark);
-  text-shadow: 0 2px 0 var(--surface);
+  color: var(--neon-yellow);
+  text-shadow:
+    0 0 8px var(--neon-yellow),
+    0 0 20px var(--done);
   pointer-events: none;
 }
 
@@ -256,9 +274,14 @@ header {
   padding: 1rem 1.75rem;
   font-size: 1.5rem;
   font-weight: 800;
+  border: 2px solid var(--done);
   border-radius: 999px;
   background: var(--surface);
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.15);
+  color: var(--done-light);
+  text-shadow: 0 0 10px var(--glow);
+  box-shadow:
+    0 0 30px var(--glow),
+    0 10px 40px rgb(0 0 0 / 0.6);
   pointer-events: none;
 }
 
@@ -298,6 +321,7 @@ header {
   height: 1rem;
   border-radius: 999px;
   background: var(--border);
+  box-shadow: 0 0 12px rgb(255 122 26 / 0.25);
   overflow: hidden;
 }
 
@@ -331,7 +355,14 @@ header {
 }
 
 #week-points li.is-goal .bar > span {
-  background-image: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #c77dff, #ff6b6b);
+  background-image: linear-gradient(
+    90deg,
+    var(--done),
+    var(--neon-yellow),
+    var(--neon-pink),
+    var(--neon-cyan),
+    var(--done)
+  );
   background-size: 200% 100%;
   animation: rainbow 1.2s linear infinite;
 }
