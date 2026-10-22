@@ -1,0 +1,16 @@
+{
+  "name": "snack-tracker",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "push": "clasp push --force",
+    "deploy": "node scripts/deploy.mjs",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@google/clasp": "3.4.1"
+  }
+}

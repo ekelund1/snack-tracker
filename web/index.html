@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Snack Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <main>
+      <section id="setup" hidden>
+        <h1>Välkommen!</h1>
+        <form id="setup-form">
+          <p id="setup-error" class="error" hidden></p>
+          <label id="token-field">
+            Kod
+            <input name="token" autocomplete="off" autocapitalize="off" spellcheck="false" required />
+          </label>
+          <p>Vem är du?</p>
+          <div class="profiles">
+            <button name="profile" value="J">J</button>
+            <button name="profile" value="R">R</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="today" hidden>
+        <header>
+          <p id="date"></p>
+          <button id="switch-profile" type="button"></button>
+        </header>
+        <div class="goals">
+          <button type="button" class="goal" data-goal="activity" aria-pressed="false">
+            <span class="goal-icon">👟</span>
+            <span class="goal-label">Dagliga steg</span>
+            <span class="goal-check">✓</span>
+          </button>
+          <button type="button" class="goal" data-goal="workout" aria-pressed="false">
+            <span class="goal-icon">💪</span>
+            <span class="goal-label">Träning</span>
+            <span class="goal-check">✓</span>
+          </button>
+          <button type="button" class="goal goal--centered" data-goal="no_sweets" aria-pressed="false">
+            <span class="goal-icon">🍏</span>
+            <span class="goal-label">Snack-fri</span>
+            <span class="goal-check">✓</span>
+          </button>
+        </div>
+        <section class="week">
+          <h2>Veckan</h2>
+          <ul id="week-points"></ul>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

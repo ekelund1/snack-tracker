@@ -1,0 +1,18 @@
+{
+  "scriptId": "18zAyfvL49Cg0P5HwcZjnhp9dE1GQGjjRXtXvxpUJZCO7hLm_yEhjgcXu",
+  "rootDir": "gas",
+  "parentId": "1lHDIeCNx3aa43VHP3Bit8C20n5p5_06Ny4iXte99n_4",
+  "scriptExtensions": [
+    ".js",
+    ".gs"
+  ],
+  "htmlExtensions": [
+    ".html"
+  ],
+  "jsonExtensions": [
+    ".json"
+  ],
+  "filePushOrder": [],
+  "skipSubdirectories": false,
+  "deploymentId": "AKfycbzWYx79NkXqokFsR69aUujSkGiJyilmLmGubuRAO1QxxX3I8bsGtO8IwqbIAG_nCnkI"
+}

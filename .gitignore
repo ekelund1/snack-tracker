@@ -1,0 +1,3 @@
+node_modules/
+# clasp credentials, if logged in per project
+.clasprc.json
