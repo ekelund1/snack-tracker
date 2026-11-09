@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-const GAS_FILES = ['Schema.js', 'SnackTracker.js', 'PlantLife.js'];
+const GAS_FILES = ['Schema.js', 'SnackTracker.js', 'PlantLife.js', 'Init.js'];
 
 const STOCKHOLM_PARTS = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Stockholm',
@@ -56,7 +56,16 @@ function fakeSheet(rows) {
   return {
     rows,
     getDataRange: () => ({ getValues: () => rows.map((row) => [...row]) }),
+    getLastRow: () => rows.length,
     getRange: (row, column, numRows, numColumns) => ({
+      // Empty cells read as '', like in Sheets.
+      getValues: () =>
+        Array.from({ length: numRows }, (_, r) =>
+          Array.from({ length: numColumns }, (_, c) => (rows[row - 1 + r] || [])[column - 1 + c] ?? ''),
+        ),
+      setFontWeight() {
+        return this;
+      },
       setValues(values) {
         if (values.length !== numRows || values[0].length !== numColumns) {
           throw new Error('setValues size does not match the range');
@@ -67,6 +76,7 @@ function fakeSheet(rows) {
             target[column - 1 + c] = value;
           });
         });
+        return this;
       },
     }),
     appendRow: (values) => rows.push([...values]),
@@ -76,7 +86,8 @@ function fakeSheet(rows) {
 export const TOKEN = 'secret-token';
 
 // A spreadsheet laid out the way init leaves it, with settings filled in.
-export function fakeSpreadsheet(gas) {
+// plantRows replaces the plant tab, header first, to stand in for an older layout.
+export function fakeSpreadsheet(gas, { plantRows } = {}) {
   const SHEETS = vm.runInContext('SHEETS', gas);
   const tabs = {
     [SHEETS.daily.name]: fakeSheet([SHEETS.daily.headers]),
@@ -89,13 +100,14 @@ export function fakeSpreadsheet(gas) {
       ['currency', 'kr'],
       ['token', TOKEN],
     ]),
-    [SHEETS.plants.name]: fakeSheet([SHEETS.plants.headers]),
+    [SHEETS.plants.name]: fakeSheet(plantRows || [SHEETS.plants.headers]),
   };
   return {
     getSheetByName: (name) => tabs[name] || null,
     daily: () => tabs[SHEETS.daily.name].rows.slice(1),
     weeks: () => tabs[SHEETS.weeks.name].rows.slice(1),
     plants: () => tabs[SHEETS.plants.name].rows.slice(1),
+    plantHeaders: () => tabs[SHEETS.plants.name].rows[0],
   };
 }
 

@@ -20,6 +20,7 @@
 
       <ul id="board" class="board"></ul>
       <p id="empty" class="empty" hidden>Inga växter än. Lägg till er första!</p>
+      <p id="board-hint" class="board-hint">Håll inne på en växt för att läsa mer om den.</p>
 
       <button id="add-plant" type="button" class="add-plant">＋ Lägg till växt</button>
     </main>
@@ -45,7 +46,8 @@
           <legend>Mängd vatten</legend>
           <label><input type="radio" name="amount" value="light" required /> 💧 Lite</label>
           <label><input type="radio" name="amount" value="moderate" /> 💧💧 Måttligt</label>
-          <label><input type="radio" name="amount" value="soak" /> 💧💧💧 Genomvattna</label>
+          <label><input type="radio" name="amount" value="soak" /> 💧💧💧 Blötlägg</label>
+          <p id="amount-guide" class="hint"></p>
         </fieldset>
         <fieldset class="intervals">
           <legend>Vattna var … dag</legend>
@@ -59,12 +61,40 @@
           </label>
         </fieldset>
         <p class="hint">Sommar är april–september, vinter oktober–mars.</p>
+        <label>
+          Anteckningar
+          <textarea name="notes" rows="4" maxlength="500" placeholder="Var den står, tecken på för mycket eller för lite vatten…"></textarea>
+        </label>
         <div class="form-actions">
           <button id="remove-plant" type="button" class="danger">Ta bort</button>
           <button id="cancel-plant" type="button">Avbryt</button>
           <button type="submit" class="primary">Spara</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="details-dialog">
+      <h2 id="details-title"></h2>
+      <p id="details-status" class="details-status"></p>
+      <dl class="details">
+        <dt>Mängd</dt>
+        <dd>
+          <strong id="details-amount"></strong>
+          <span id="details-amount-guide"></span>
+        </dd>
+        <dt>Hur ofta</dt>
+        <dd id="details-schedule"></dd>
+        <dt>Senast vattnad</dt>
+        <dd id="details-last"></dd>
+        <dt>Nästa gång</dt>
+        <dd id="details-next"></dd>
+        <dt id="details-notes-label">Anteckningar</dt>
+        <dd id="details-notes" class="details-notes"></dd>
+      </dl>
+      <div class="form-actions">
+        <button id="details-edit" type="button">Ändra</button>
+        <button id="details-close" type="button" class="primary">Stäng</button>
+      </div>
     </dialog>
   </body>
 </html>

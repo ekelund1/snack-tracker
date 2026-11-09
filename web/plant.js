@@ -7,7 +7,17 @@
 export const AMOUNTS = {
   light: 'Lite',
   moderate: 'Måttligt',
-  soak: 'Genomvattna',
+  soak: 'Blötlägg',
+};
+
+// What each amount means in practice, shown in a plant's details.
+export const AMOUNT_GUIDE = {
+  light: 'En skvätt, ungefär en halv dl. Fukta jordytan; inget ska rinna ut i ytterkrukan.',
+  moderate:
+    'Vattna långsamt över hela jorden tills det börjar rinna ut i ytterkrukan. Häll bort det som står kvar efter 15 minuter.',
+  soak:
+    'Ställ innerkrukan i en skål med rumstempererat vatten i 10–15 minuter, så att jorden eller barken suger åt sig. ' +
+    'Låt den sedan rinna av helt, till exempel i diskhon, innan den ställs tillbaka i ytterkrukan.',
 };
 
 // Starting points for a new plant, for common houseplants in a southern
@@ -35,6 +45,33 @@ function intervalOn(plant, date) {
 
 function daysBetween(from, to) {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
+}
+
+function addDays(date, count) {
+  const day = new Date(`${date}T00:00:00Z`);
+  day.setUTCDate(day.getUTCDate() + count);
+  return day.toISOString().slice(0, 10);
+}
+
+// The date of the next watering: today when due, by today's season otherwise.
+export function nextWatering(plant, today) {
+  return addDays(today, plantStatus(plant, today).days_left);
+}
+
+// Calendar dates in UTC, matching how the dates are stored.
+const DATE_LABEL = new Intl.DateTimeFormat('sv-SE', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
+const NEAR_DAYS = { '-1': 'i går', 0: 'idag', 1: 'i morgon' };
+
+// An interval in words: 'varje dag', 'var 2:a dag', 'var 14:e dag'.
+export function everyDays(days) {
+  if (days === 1) return 'varje dag';
+  const ending = [1, 2].includes(days % 10) && ![11, 12].includes(days % 100) ? 'a' : 'e';
+  return `var ${days}:${ending} dag`;
+}
+
+// 'idag', 'i går' or 'i morgon' near today, else like 'måndag 16 november'.
+export function dayLabel(date, today) {
+  return NEAR_DAYS[daysBetween(today, date)] || DATE_LABEL.format(new Date(`${date}T00:00:00Z`));
 }
 
 // 'due' can be watered now, 'watered' was watered today, 'waiting' is not due

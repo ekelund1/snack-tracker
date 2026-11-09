@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import { TOKEN, fakeLock, fakeSpreadsheet, loadGas } from './gas-fakes.js';
 
 // Monday 9 Nov 2026, 10:00 in Stockholm.
@@ -11,13 +12,16 @@ const TOMORROW = new Date('2026-11-10T09:00:00Z');
 // which is also what goes over the wire.
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
-function newApi() {
+function newApi(options) {
   const gas = loadGas();
-  const ss = fakeSpreadsheet(gas);
+  const ss = fakeSpreadsheet(gas, options);
   return {
     ss,
+    // What init does to the plant tab before adding plants.
+    checkPlantTab: () => gas.ensureSheet_(ss, vm.runInContext('SHEETS.plants', gas)),
     post: (body, { now = TODAY, lock = fakeLock() } = {}) => plain(gas.handlePost_({ token: TOKEN, ...body }, { ss, lock, now })),
     get: (params, { now = TODAY } = {}) => plain(gas.handleGet_({ token: TOKEN, ...params }, { ss, lock: fakeLock(), now })),
+    addDefaultPlants: () => gas.ensurePlants_(ss.getSheetByName('Plant_Plants')),
     plants: ({ now = TODAY } = {}) => plain(gas.handleGet_({ action: 'plants', token: TOKEN }, { ss, lock: fakeLock(), now })).plants,
   };
 }
@@ -31,6 +35,7 @@ function plantWrite(overrides = {}) {
     amount: 'moderate',
     summer_days: 7,
     winter_days: 12,
+    notes: 'Gillar ljus.',
     ...overrides,
   };
 }
@@ -104,6 +109,9 @@ test('given plant writes that are not valid plants, when sent, then each is reje
     { winter_days: '7' },
     { id: '' },
     { name: '=IMPORTXML("x")' },
+    { notes: 'x'.repeat(501) },
+    { notes: '=1+1' },
+    { notes: 5 },
   ];
 
   invalid.forEach((overrides) => {
@@ -203,4 +211,119 @@ test('given plants on the board, when reading snack state, then it still answers
 
   assert.equal(state.ok, true);
   assert.equal(state.plants, undefined);
+});
+
+// The plants init adds
+
+test('given an empty board, when init adds the default plants, then the svärmorstunga and the orchid are on it, never watered', () => {
+  const api = newApi();
+
+  api.addDefaultPlants();
+
+  assert.deepEqual(
+    api.plants().map(({ name, amount, summer_days, winter_days, last_watered }) => ({ name, amount, summer_days, winter_days, last_watered })),
+    [
+      { name: 'Svärmorstunga', amount: 'moderate', summer_days: 14, winter_days: 30, last_watered: '' },
+      { name: 'Orkidé', amount: 'soak', summer_days: 7, winter_days: 10, last_watered: '' },
+    ],
+  );
+});
+
+test('given the default plants were added and one watered, when init runs again, then nothing is duplicated or reset', () => {
+  const api = newApi();
+  api.addDefaultPlants();
+  const [first] = api.plants();
+  api.post({ action: 'water', id: first.id, profile: 'J' });
+
+  api.addDefaultPlants();
+
+  assert.equal(api.plants().length, 2);
+  assert.equal(api.plants()[0].last_watered, '2026-11-09');
+});
+
+test('given a default plant was removed, when init runs again, then it stays removed', () => {
+  const api = newApi();
+  api.addDefaultPlants();
+  const [first] = api.plants();
+  api.post({ action: 'remove_plant', id: first.id });
+
+  api.addDefaultPlants();
+
+  assert.deepEqual(api.plants().map((plant) => plant.name), ['Orkidé']);
+});
+
+test('given an edit that leaves out notes, when it is saved, then the plant keeps its notes', () => {
+  const api = newApi();
+  api.post(plantWrite({ notes: 'Inte på elementet.' }));
+  const { notes, ...withoutNotes } = plantWrite({ name: 'Monstera 2' });
+
+  api.post(withoutNotes);
+
+  assert.equal(api.plants()[0].notes, 'Inte på elementet.');
+});
+
+// Notes on the plants init adds
+
+test('given an empty board, when init adds the default plants, then each comes with care notes', () => {
+  const api = newApi();
+
+  api.addDefaultPlants();
+
+  api.plants().forEach((plant) => assert.match(plant.notes, /\S{3,}/, plant.name));
+});
+
+test('given default plants added before they had notes, when init runs again, then their empty notes are filled', () => {
+  const api = newApi();
+  api.addDefaultPlants();
+  api.plants().forEach((plant) => api.post({ ...plant, action: 'plant', notes: '' }));
+
+  api.addDefaultPlants();
+
+  api.plants().forEach((plant) => assert.notEqual(plant.notes, '', plant.name));
+});
+
+test('given notes edited in the app, when init runs again, then the edited notes stay', () => {
+  const api = newApi();
+  api.addDefaultPlants();
+  const [first] = api.plants();
+  api.post({ ...first, action: 'plant', notes: 'Står i sovrummet.' });
+
+  api.addDefaultPlants();
+
+  assert.equal(api.plants()[0].notes, 'Står i sovrummet.');
+});
+
+// A plant tab from before a column was added
+
+const OLD_HEADERS = [
+  'id',
+  'name',
+  'emoji',
+  'amount',
+  'summer_days',
+  'winter_days',
+  'last_watered',
+  'last_watered_by',
+  'previous_watered',
+  'removed',
+];
+
+test('given a plant tab from before notes, when init checks it, then a notes column is added and the plants are kept', () => {
+  const api = newApi({ plantRows: [[...OLD_HEADERS], ['p1', 'Aloe', '🌵', 'soak', 14, 30, '2026-11-01', 'J', '', false]] });
+
+  api.checkPlantTab();
+
+  assert.deepEqual(api.ss.plantHeaders(), [...OLD_HEADERS, 'notes']);
+  const [aloe] = api.plants();
+  assert.equal(aloe.name, 'Aloe');
+  assert.equal(aloe.last_watered, '2026-11-01');
+  assert.equal(aloe.notes, '');
+});
+
+test('given a plant tab with headers in another order, when init checks it, then it stops without changing the tab', () => {
+  const swapped = ['name', 'id', ...OLD_HEADERS.slice(2)];
+  const api = newApi({ plantRows: [[...swapped]] });
+
+  assert.throws(() => api.checkPlantTab(), /unexpected headers/);
+  assert.deepEqual(api.ss.plantHeaders(), swapped);
 });

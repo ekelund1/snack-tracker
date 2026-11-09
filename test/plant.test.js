@@ -1,6 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardOrder, plantStatus, seasonOf, statusLabel, unwaterPlant, waterPlant } from '../web/plant.js';
+import {
+  AMOUNTS,
+  AMOUNT_GUIDE,
+  boardOrder,
+  dayLabel,
+  everyDays,
+  nextWatering,
+  plantStatus,
+  seasonOf,
+  statusLabel,
+  unwaterPlant,
+  waterPlant,
+} from '../web/plant.js';
 
 function plant(overrides = {}) {
   return {
@@ -53,7 +65,7 @@ test('given a plant watered 8 days ago, when checking it in summer and in winter
 // Labels
 
 test('given each status, when labelling it, then due says how much, waiting says when, watered says who', () => {
-  assert.equal(statusLabel(plant({ amount: 'soak' }), { state: 'due', days_left: 0 }), 'Genomvattna');
+  assert.equal(statusLabel(plant({ amount: 'soak' }), { state: 'due', days_left: 0 }), 'Blötlägg');
   assert.equal(statusLabel(plant(), { state: 'waiting', days_left: 1 }), 'Vattna i morgon');
   assert.equal(statusLabel(plant(), { state: 'waiting', days_left: 4 }), 'Vattna om 4 dagar');
   assert.equal(statusLabel(plant({ last_watered_by: 'R' }), { state: 'watered', days_left: 12 }), 'Vattnad idag av R');
@@ -104,4 +116,43 @@ test('given due, waiting and watered plants, when ordering the board, then due c
     boardOrder(plants, '2026-11-09').map((p) => p.id),
     ['due-a', 'due-b', 'soon', 'later', 'watered'],
   );
+});
+
+// Details
+
+test('given each amount, when reading its guide, then every amount has a label and a how-to', () => {
+  Object.keys(AMOUNTS).forEach((amount) => assert.match(AMOUNT_GUIDE[amount], /\S{3,}/, amount));
+  assert.match(AMOUNT_GUIDE.soak, /10–15 minuter/);
+});
+
+test('given a plant never watered, when asking for the next watering, then it is today', () => {
+  assert.equal(nextWatering(plant(), '2026-11-09'), '2026-11-09');
+});
+
+test('given a winter plant watered 9 of 12 days ago, when asking for the next watering, then it is in 3 days', () => {
+  assert.equal(nextWatering(plant({ last_watered: '2026-10-31' }), '2026-11-09'), '2026-11-12');
+});
+
+test('given an overdue plant, when asking for the next watering, then it is today', () => {
+  assert.equal(nextWatering(plant({ last_watered: '2026-10-01' }), '2026-11-09'), '2026-11-09');
+});
+
+test('given a plant watered today, when asking for the next watering, then it is one interval away', () => {
+  assert.equal(nextWatering(plant({ last_watered: '2026-11-09' }), '2026-11-09'), '2026-11-21');
+});
+
+test('given dates around today, when labelling them, then near days are words and the rest are dates', () => {
+  assert.equal(dayLabel('2026-11-09', '2026-11-09'), 'idag');
+  assert.equal(dayLabel('2026-11-08', '2026-11-09'), 'i går');
+  assert.equal(dayLabel('2026-11-10', '2026-11-09'), 'i morgon');
+  assert.equal(dayLabel('2026-11-16', '2026-11-09'), 'måndag 16 november');
+});
+
+test('given intervals, when putting them in words, then Swedish ordinals are used', () => {
+  assert.equal(everyDays(1), 'varje dag');
+  assert.equal(everyDays(2), 'var 2:a dag');
+  assert.equal(everyDays(7), 'var 7:e dag');
+  assert.equal(everyDays(12), 'var 12:e dag');
+  assert.equal(everyDays(21), 'var 21:a dag');
+  assert.equal(everyDays(30), 'var 30:e dag');
 });

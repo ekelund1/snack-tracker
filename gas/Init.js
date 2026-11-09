@@ -11,12 +11,13 @@ function init() {
   ss.getSheetByName(SHEETS.weeks.name).getRange('A:A').setNumberFormat('@');
   // The same for plant dates, and for ids and names that could look like numbers.
   const plants = ss.getSheetByName(SHEETS.plants.name);
-  ['id', 'name', 'emoji', 'last_watered', 'previous_watered'].forEach((header) => {
+  ['id', 'name', 'emoji', 'last_watered', 'previous_watered', 'notes'].forEach((header) => {
     const column = SHEETS.plants.headers.indexOf(header) + 1;
     plants.getRange(1, column, plants.getMaxRows(), 1).setNumberFormat('@');
   });
 
   ensureSettings_(ss.getSheetByName(SHEETS.settings.name));
+  ensurePlants_(plants);
   ensureWeeklyTrigger_();
   console.log('Init done. The token is in ' + SHEETS.settings.name + '.');
 }
@@ -31,7 +32,8 @@ function ensureWeeklyTrigger_() {
 }
 
 // Creates the tab with its header row, or checks that an existing tab's
-// headers match, so the API never writes into misaligned columns.
+// headers match, so the API never writes into misaligned columns. Columns
+// added to the end of the spec since the tab was made are appended.
 function ensureSheet_(ss, spec) {
   const sheet = ss.getSheetByName(spec.name) || ss.insertSheet(spec.name);
   const headerRange = sheet.getRange(1, 1, 1, spec.headers.length);
@@ -42,10 +44,34 @@ function ensureSheet_(ss, spec) {
     return;
   }
 
-  const existing = headerRange.getValues()[0];
-  if (existing.join() !== spec.headers.join()) {
+  const existing = headerRange.getValues()[0].filter((header) => header !== '');
+  if (existing.join() !== spec.headers.slice(0, existing.length).join()) {
     throw new Error(spec.name + ' has unexpected headers: ' + existing.join(', '));
   }
+
+  const missing = spec.headers.slice(existing.length);
+  if (missing.length > 0) {
+    sheet.getRange(1, existing.length + 1, 1, missing.length).setValues([missing]).setFontWeight('bold');
+  }
+}
+
+// Appends the default plants whose id is not in the tab, and fills in a
+// default plant's notes when they are empty. Anything else edited, watered or
+// removed in the app is kept as it is.
+function ensurePlants_(sheet) {
+  const records = readRecords_(sheet, SHEETS.plants);
+  DEFAULT_PLANTS.forEach((plant) => {
+    const saved = records.find((record) => String(record.id) === plant.id);
+    if (!saved) {
+      const record = Object.assign(
+        { last_watered: '', last_watered_by: '', previous_watered: '', removed: false },
+        plant,
+      );
+      sheet.appendRow(SHEETS.plants.headers.map((header) => record[header]));
+    } else if (!saved.notes) {
+      writeRecord_(sheet, SHEETS.plants, saved, Object.assign({}, saved, { notes: plant.notes }));
+    }
+  });
 }
 
 // Appends missing default settings, and a generated token if there is none.

@@ -12,6 +12,7 @@
 
 const AMOUNTS = ['light', 'moderate', 'soak'];
 const MAX_INTERVAL_DAYS = 90;
+const MAX_NOTES_LENGTH = 500;
 
 function readPlants_(ss, settings, now) {
   const plants = readRecords_(sheet_(ss, SHEETS.plants), SHEETS.plants)
@@ -32,27 +33,32 @@ function plantFromRecord_(record) {
     last_watered: String(record.last_watered),
     last_watered_by: String(record.last_watered_by),
     previous_watered: String(record.previous_watered),
+    // Rows from before the notes column have none.
+    notes: String(record.notes ?? ''),
   };
 }
 
 // The client makes the id, so sending the same new plant twice adds it once.
-// Editing a plant keeps its watering history.
+// Editing a plant keeps its watering history, and its notes when the edit
+// leaves them out.
 function savePlant_(body, deps) {
   if (!isValidPlant_(body)) return { ok: false, error: 'invalid_plant' };
 
   const sheet = sheet_(deps.ss, SHEETS.plants);
   const saved = findRecord_(sheet, body.id);
+  const details = {
+    id: body.id,
+    name: body.name.trim(),
+    emoji: body.emoji,
+    amount: body.amount,
+    summer_days: body.summer_days,
+    winter_days: body.winter_days,
+  };
+  if (body.notes !== undefined) details.notes = body.notes.trim();
   const record = Object.assign(
-    { last_watered: '', last_watered_by: '', previous_watered: '', removed: false },
+    { last_watered: '', last_watered_by: '', previous_watered: '', removed: false, notes: '' },
     saved,
-    {
-      id: body.id,
-      name: body.name.trim(),
-      emoji: body.emoji,
-      amount: body.amount,
-      summer_days: body.summer_days,
-      winter_days: body.winter_days,
-    },
+    details,
   );
   writeRecord_(sheet, SHEETS.plants, saved, record);
   return { ok: true };
@@ -68,6 +74,7 @@ function isValidPlant_(body) {
     // A leading '=' would make the sheet run the text as a formula.
     !/^=/.test(body.name) &&
     !/^=/.test(body.emoji) &&
+    (body.notes === undefined || (isText(body.notes, 0, MAX_NOTES_LENGTH) && !/^=/.test(body.notes))) &&
     AMOUNTS.includes(body.amount) &&
     isInterval(body.summer_days) &&
     isInterval(body.winter_days)

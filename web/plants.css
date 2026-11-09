@@ -141,8 +141,16 @@ header {
   opacity: 0.55;
 }
 
-.plant-water:disabled {
+.plant-water[aria-disabled='true'] {
   cursor: default;
+}
+
+/* Holding a card opens its details; this stops iOS from selecting the text
+   or showing its own callout instead. */
+.plant-water {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .plant-edit {
@@ -304,4 +312,66 @@ legend {
   margin-right: auto;
   border-color: var(--error);
   color: var(--error);
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.875rem 1rem;
+  font: inherit;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--bg);
+  color: inherit;
+  resize: vertical;
+}
+
+.board-hint {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Details dialog */
+
+.details-status {
+  margin: -0.5rem 0 1rem;
+  font-weight: 700;
+  color: var(--done-light);
+}
+
+.details {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 1.25rem;
+}
+
+.details dt {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.details dd {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.details dd strong {
+  display: block;
+}
+
+#details-amount-guide {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+}
+
+.details-notes {
+  white-space: pre-line;
 }

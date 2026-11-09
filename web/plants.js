@@ -3,7 +3,21 @@ import { pop } from './celebrate.js';
 import { API_URL } from './config.js';
 import { burst } from './confetti.js';
 import { stockholmDate } from './day.js';
-import { PRESETS, boardOrder, plantStatus, seasonOf, statusLabel, unwaterPlant, waterPlant } from './plant.js';
+import { onLongPress } from './longpress.js';
+import {
+  AMOUNTS,
+  AMOUNT_GUIDE,
+  PRESETS,
+  boardOrder,
+  dayLabel,
+  everyDays,
+  nextWatering,
+  plantStatus,
+  seasonOf,
+  statusLabel,
+  unwaterPlant,
+  waterPlant,
+} from './plant.js';
 import { createStore } from './store.js';
 
 // Plant-Life: the shared watering board. Token and profile come from the
@@ -25,6 +39,22 @@ const profileLabel = document.getElementById('profile');
 const seasonLabel = document.getElementById('season');
 const board = document.getElementById('board');
 const emptyNote = document.getElementById('empty');
+const boardHint = document.getElementById('board-hint');
+const amountGuide = document.getElementById('amount-guide');
+const details = {
+  dialog: document.getElementById('details-dialog'),
+  title: document.getElementById('details-title'),
+  status: document.getElementById('details-status'),
+  amount: document.getElementById('details-amount'),
+  amountGuide: document.getElementById('details-amount-guide'),
+  schedule: document.getElementById('details-schedule'),
+  last: document.getElementById('details-last'),
+  next: document.getElementById('details-next'),
+  notesLabel: document.getElementById('details-notes-label'),
+  notes: document.getElementById('details-notes'),
+  edit: document.getElementById('details-edit'),
+  close: document.getElementById('details-close'),
+};
 const addButton = document.getElementById('add-plant');
 const dialog = document.getElementById('plant-dialog');
 const form = document.getElementById('plant-form');
@@ -49,10 +79,13 @@ function render() {
   const plants = boardOrder(store.getPlants(), date);
   board.replaceChildren(...plants.map((plant) => createCard(plant, plantStatus(plant, date))));
   emptyNote.hidden = plants.length > 0;
+  boardHint.hidden = plants.length === 0;
 }
 
 // Due plants can be tapped to water them. The others are disabled; one
-// watered today can still be undone.
+// watered today can still be undone. Holding any card opens its details.
+// Disabled is aria-disabled, not the disabled attribute, because a disabled
+// button gets no touch events and so couldn't be held.
 function createCard(plant, status) {
   const item = document.createElement('li');
   item.className = 'plant';
@@ -62,13 +95,16 @@ function createCard(plant, status) {
   const water = document.createElement('button');
   water.type = 'button';
   water.className = 'plant-water';
-  water.disabled = status.state !== 'due';
+  water.setAttribute('aria-disabled', String(status.state !== 'due'));
   water.append(
     span('plant-emoji', plant.emoji || DEFAULT_EMOJI),
     span('plant-name', plant.name),
     span('plant-status', status.state === 'due' ? `${DROPS[plant.amount]} ${statusLabel(plant, status)}` : statusLabel(plant, status)),
   );
-  water.addEventListener('click', () => onWater(plant));
+  onLongPress(water, () => openDetails(plant));
+  water.addEventListener('click', () => {
+    if (status.state === 'due') onWater(plant);
+  });
 
   const edit = document.createElement('button');
   edit.type = 'button';
@@ -158,7 +194,45 @@ async function refresh() {
   render();
 }
 
+// Details
+
+// Everything about one plant: how much and how to water it, how often, when
+// it was and will be watered, and its notes.
+function openDetails(plant) {
+  if (navigator.vibrate) navigator.vibrate(15);
+  const date = today();
+  const status = plantStatus(plant, date);
+
+  details.title.textContent = `${plant.emoji || DEFAULT_EMOJI} ${plant.name}`;
+  details.status.textContent = status.state === 'due' ? 'Dags att vattna' : statusLabel(plant, status);
+  details.amount.textContent = `${DROPS[plant.amount]} ${AMOUNTS[plant.amount]}`;
+  details.amountGuide.textContent = AMOUNT_GUIDE[plant.amount];
+  const now = (season) => (seasonOf(date) === season ? ' (nu)' : '');
+  details.schedule.textContent =
+    `☀️ Sommar: ${everyDays(plant.summer_days)}${now('summer')} · ` +
+    `❄️ Vinter: ${everyDays(plant.winter_days)}${now('winter')}`;
+  details.last.textContent = plant.last_watered
+    ? `${dayLabel(plant.last_watered, date)}${plant.last_watered_by ? ` av ${plant.last_watered_by}` : ''}`
+    : 'Aldrig';
+  details.next.textContent = dayLabel(nextWatering(plant, date), date);
+  details.notes.textContent = plant.notes || '';
+  details.notes.hidden = !plant.notes;
+  details.notesLabel.hidden = !plant.notes;
+
+  details.edit.onclick = () => {
+    details.dialog.close();
+    openDialog(plant);
+  };
+  details.dialog.showModal();
+}
+
+details.close.addEventListener('click', () => details.dialog.close());
+
 // Adding and editing
+
+function showAmountGuide() {
+  amountGuide.textContent = AMOUNT_GUIDE[form.elements.amount.value] || '';
+}
 
 function fillPresets() {
   const choose = new Option('Välj typ för förslag…', '');
@@ -185,11 +259,13 @@ function openDialog(plant) {
     form.elements.amount.value = plant.amount;
     form.elements.summer_days.value = plant.summer_days;
     form.elements.winter_days.value = plant.winter_days;
+    form.elements.notes.value = plant.notes || '';
   } else {
     form.elements.emoji.value = DEFAULT_EMOJI;
     form.elements.preset.value = PRESETS[0].key;
     applyPreset(PRESETS[0].key);
   }
+  showAmountGuide();
   dialog.showModal();
 }
 
@@ -201,6 +277,7 @@ function savePlantFromForm() {
     amount: form.elements.amount.value,
     summer_days: Number(form.elements.summer_days.value),
     winter_days: Number(form.elements.winter_days.value),
+    notes: form.elements.notes.value.trim(),
   };
   const plants = editing
     ? replacePlant({ ...editing, ...fields })
@@ -210,7 +287,11 @@ function savePlantFromForm() {
 
 addButton.addEventListener('click', () => openDialog(null));
 cancelButton.addEventListener('click', () => dialog.close());
-form.elements.preset.addEventListener('change', (event) => applyPreset(event.target.value));
+form.elements.preset.addEventListener('change', (event) => {
+  applyPreset(event.target.value);
+  showAmountGuide();
+});
+form.querySelectorAll('[name="amount"]').forEach((radio) => radio.addEventListener('change', showAmountGuide));
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
