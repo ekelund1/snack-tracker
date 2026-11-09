@@ -149,3 +149,26 @@ test('given a milestone not celebrated yet, when claiming it, then it is claimed
   assert.equal(again, false);
   assert.equal(other, true);
 });
+
+// Plant-Life
+
+test('given nothing stored, when reading plants, then there are none', () => {
+  assert.deepEqual(createStore(fakeStorage()).getPlants(), []);
+});
+
+test('given plants from the server, when the app reloads, then they are still there', () => {
+  const storage = fakeStorage();
+  const plants = [{ id: 'p1', name: 'Monstera', last_watered: '2026-11-09' }];
+  createStore(storage).savePlants(plants);
+
+  assert.deepEqual(createStore(storage).getPlants(), plants);
+});
+
+test('given a setup made on the snack page, when the plant page reads the store, then token and profile are shared', () => {
+  const storage = fakeStorage();
+  createStore(storage).saveSetup('secret', 'R');
+
+  const store = createStore(storage);
+  assert.equal(store.getToken(), 'secret');
+  assert.equal(store.getProfile(), 'R');
+});

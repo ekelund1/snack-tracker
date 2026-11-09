@@ -1,0 +1,307 @@
+/* Plant-Life: the snack page's layout and buttons, in cyan, green and black.
+   Loaded after styles.css, so these tokens replace the orange ones. */
+
+:root {
+  --bg: #030807;
+  --surface: #0b1715;
+  --text: #e4fbf5;
+  --muted: #74968f;
+  --border: #16302c;
+  --border-strong: #010403;
+  --done: #19e6c1;
+  --done-light: #6fffe0;
+  --done-dark: #087a65;
+  --done-text: #00140f;
+  --glow: rgb(25 230 193 / 0.5);
+  --leaf: #3dff8c;
+  --leaf-glow: rgb(61 255 140 / 0.35);
+}
+
+body {
+  /* A teal haze at the top, fading into the dark. */
+  background: radial-gradient(ellipse 120% 60% at 50% 0%, #053029, var(--bg) 70%) fixed var(--bg);
+}
+
+header {
+  margin-bottom: 1rem;
+}
+
+.profile {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.plant-title {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--done-light);
+  text-shadow: 0 0 14px var(--glow);
+}
+
+.season {
+  margin: 0.25rem 0 1.5rem;
+  color: var(--muted);
+}
+
+/* The board: two cards side by side. */
+
+.board {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plant {
+  position: relative;
+}
+
+.plant-water {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 10rem;
+  padding: 1rem 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 6px 0 var(--border-strong);
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s,
+    opacity 0.2s;
+}
+
+.plant-emoji {
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.plant-name {
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.plant-status {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Due: glowing and bobbing, asking to be watered. */
+
+.plant[data-state='due'] .plant-water {
+  border-color: var(--done);
+  box-shadow:
+    0 6px 0 var(--done-dark),
+    0 0 24px var(--glow);
+}
+
+.plant[data-state='due'] .plant-water:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 2px 0 var(--done-dark),
+    0 0 24px var(--glow);
+}
+
+.plant[data-state='due'] .plant-status {
+  color: var(--done-light);
+}
+
+.plant[data-state='due'] .plant-emoji {
+  animation: bob 2.4s ease-in-out infinite;
+}
+
+.plant:nth-child(even) .plant-emoji {
+  animation-delay: -1.2s;
+}
+
+/* Watered today: a calm green, with an undo button. */
+
+.plant[data-state='watered'] .plant-water {
+  border-color: var(--leaf);
+  box-shadow:
+    0 6px 0 var(--border-strong),
+    0 0 18px var(--leaf-glow);
+}
+
+.plant[data-state='watered'] .plant-status {
+  color: var(--leaf);
+}
+
+/* Waiting: dimmed and not tappable. */
+
+.plant[data-state='waiting'] .plant-water {
+  opacity: 0.55;
+}
+
+.plant-water:disabled {
+  cursor: default;
+}
+
+.plant-edit {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.plant-undo {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid var(--leaf);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--leaf);
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+}
+
+.add-plant {
+  display: block;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  font-weight: 700;
+  border: 2px dashed var(--done-dark);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--done-light);
+}
+
+/* Add and edit dialog */
+
+dialog {
+  width: min(28rem, calc(100% - 2rem));
+  padding: 1.25rem;
+  border: 2px solid var(--done-dark);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 0 40px var(--glow);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.7);
+}
+
+dialog h2 {
+  margin: 0 0 1rem;
+  color: var(--done-light);
+}
+
+#plant-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: 0.75rem;
+}
+
+select {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.875rem 1rem;
+  font: inherit;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--bg);
+  color: inherit;
+}
+
+dialog input:not([type='radio']) {
+  background: var(--bg);
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+legend {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.amounts {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.amounts label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 500;
+}
+
+.amounts input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--done);
+}
+
+.intervals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.intervals legend {
+  grid-column: 1 / -1;
+}
+
+.hint {
+  margin: -0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.form-actions button {
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  background: none;
+}
+
+.form-actions .primary {
+  border-color: var(--done);
+  background: var(--done);
+  color: var(--done-text);
+}
+
+.form-actions .danger {
+  margin-right: auto;
+  border-color: var(--error);
+  color: var(--error);
+}

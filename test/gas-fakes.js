@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-const GAS_FILES = ['Schema.js', 'SnackTracker.js'];
+const GAS_FILES = ['Schema.js', 'SnackTracker.js', 'PlantLife.js'];
 
 const STOCKHOLM_PARTS = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Stockholm',
@@ -89,11 +89,13 @@ export function fakeSpreadsheet(gas) {
       ['currency', 'kr'],
       ['token', TOKEN],
     ]),
+    [SHEETS.plants.name]: fakeSheet([SHEETS.plants.headers]),
   };
   return {
     getSheetByName: (name) => tabs[name] || null,
     daily: () => tabs[SHEETS.daily.name].rows.slice(1),
     weeks: () => tabs[SHEETS.weeks.name].rows.slice(1),
+    plants: () => tabs[SHEETS.plants.name].rows.slice(1),
   };
 }
 

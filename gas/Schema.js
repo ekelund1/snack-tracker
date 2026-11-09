@@ -12,6 +12,22 @@ const SHEETS = {
     name: 'Snack_Settings',
     headers: ['key', 'value'],
   },
+  // One row per plant. Removed plants keep their row, marked removed.
+  plants: {
+    name: 'Plant_Plants',
+    headers: [
+      'id',
+      'name',
+      'emoji',
+      'amount',
+      'summer_days',
+      'winter_days',
+      'last_watered',
+      'last_watered_by',
+      'previous_watered',
+      'removed',
+    ],
+  },
 };
 
 // Written by init when missing; existing values are never overwritten.

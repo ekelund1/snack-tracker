@@ -414,3 +414,25 @@ header {
     transform: rotate(20deg) scale(1.1);
   }
 }
+
+/* Links between the snack page and Plant-Life. */
+
+.nav-link {
+  display: inline-block;
+  padding: 0.5rem 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.nav-link--plants {
+  display: block;
+  width: fit-content;
+  margin: 2.5rem auto 0;
+  border-color: #19e6c1;
+  color: #6fffe0;
+  box-shadow: 0 0 18px rgb(25 230 193 / 0.35);
+}

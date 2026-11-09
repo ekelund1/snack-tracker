@@ -54,3 +54,34 @@ test('given a token, when fetching state, then the state action is requested wit
   assert.equal(calls[0].url, `${API_URL}?action=state&token=a%20b%26c`);
   assert.deepEqual(result, state);
 });
+
+// Plant-Life
+
+test('given a plant action, when sending it, then the action, token and fields are posted as text/plain without CORS', async () => {
+  const { calls, fetchFn } = fakeFetch();
+
+  await createApi(fetchFn, API_URL).sendPlant('secret', 'water', { id: 'p1', profile: 'J' });
+
+  assert.equal(calls[0].url, API_URL);
+  assert.equal(calls[0].options.mode, 'no-cors');
+  assert.equal(calls[0].options.headers['Content-Type'], 'text/plain');
+  assert.deepEqual(JSON.parse(calls[0].options.body), { action: 'water', token: 'secret', id: 'p1', profile: 'J' });
+});
+
+test('given no network, when sending a plant action, then it reports that it was not sent', async () => {
+  const fetchFn = async () => {
+    throw new TypeError('Failed to fetch');
+  };
+
+  assert.equal(await createApi(fetchFn, API_URL).sendPlant('secret', 'water', { id: 'p1' }), false);
+});
+
+test('given a token, when fetching plants, then the plants action is requested with the encoded token', async () => {
+  const board = { ok: true, today: '2026-11-09', plants: [] };
+  const { calls, fetchFn } = fakeFetch(() => ({ json: async () => board }));
+
+  const result = await createApi(fetchFn, API_URL).fetchPlants('a b&c');
+
+  assert.equal(calls[0].url, `${API_URL}?action=plants&token=a%20b%26c`);
+  assert.deepEqual(result, board);
+});

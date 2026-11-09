@@ -26,7 +26,7 @@ function resize() {
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 }
 
-function addParticle(x, y, angle, speed, { gravity = 0.3, decay = 0.012 } = {}) {
+function addParticle(x, y, angle, speed, { gravity = 0.3, decay = 0.012, colors = COLORS } = {}) {
   particles.push({
     x,
     y,
@@ -39,17 +39,18 @@ function addParticle(x, y, angle, speed, { gravity = 0.3, decay = 0.012 } = {}) 
     rotation: Math.random() * Math.PI,
     spin: (Math.random() - 0.5) * 0.4,
     wobble: Math.random() * Math.PI * 2,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    color: colors[Math.floor(Math.random() * colors.length)],
     round: Math.random() < 0.3,
   });
   if (!frame) frame = requestAnimationFrame(tick);
 }
 
-// Pieces flying out from a point, upwards by default.
-export function burst(x, y, { count = 40, power = 10, spread = Math.PI * 1.2, angle = -Math.PI / 2 } = {}) {
+// Pieces flying out from a point, upwards by default, in the snack colors
+// unless others are given.
+export function burst(x, y, { count = 40, power = 10, spread = Math.PI * 1.2, angle = -Math.PI / 2, colors } = {}) {
   ensureCanvas();
   for (let i = 0; i < count; i++) {
-    addParticle(x, y, angle + (Math.random() - 0.5) * spread, power * (0.4 + Math.random() * 0.8));
+    addParticle(x, y, angle + (Math.random() - 0.5) * spread, power * (0.4 + Math.random() * 0.8), { colors });
   }
 }
 

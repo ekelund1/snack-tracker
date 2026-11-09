@@ -9,6 +9,12 @@ function init() {
   // that Apps Script reads back shifted by time zone.
   ss.getSheetByName(SHEETS.daily.name).getRange('A:A').setNumberFormat('@');
   ss.getSheetByName(SHEETS.weeks.name).getRange('A:A').setNumberFormat('@');
+  // The same for plant dates, and for ids and names that could look like numbers.
+  const plants = ss.getSheetByName(SHEETS.plants.name);
+  ['id', 'name', 'emoji', 'last_watered', 'previous_watered'].forEach((header) => {
+    const column = SHEETS.plants.headers.indexOf(header) + 1;
+    plants.getRange(1, column, plants.getMaxRows(), 1).setNumberFormat('@');
+  });
 
   ensureSettings_(ss.getSheetByName(SHEETS.settings.name));
   ensureWeeklyTrigger_();

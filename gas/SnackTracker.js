@@ -4,6 +4,9 @@
 // POST {action:'day', …}        upserts one profile's full day state
 // POST {action:'transferred', …} marks a week's payout as transferred
 //
+// Plant-Life's actions (plants, plant, remove_plant, water, unwater) are in
+// PlantLife.js and share the token, lock and settings.
+//
 // Writes arrive as text/plain (the frontend can't send JSON without a CORS
 // preflight, which Apps Script doesn't answer), so the body is parsed here.
 
@@ -49,15 +52,25 @@ function json_(result) {
 function handleGet_(params, deps) {
   const settings = readSettings_(deps.ss);
   if (!isAuthorized_(params.token, settings)) return { ok: false, error: 'unauthorized' };
-  if (params.action !== 'state') return { ok: false, error: 'unknown_action' };
-  return Object.assign({ ok: true }, readState_(deps.ss, settings, deps.now));
+
+  const reads = { state: readState_, plants: readPlants_ };
+  const read = reads[params.action];
+  if (!read) return { ok: false, error: 'unknown_action' };
+  return Object.assign({ ok: true }, read(deps.ss, settings, deps.now));
 }
 
 function handlePost_(body, deps) {
   const settings = readSettings_(deps.ss);
   if (!isAuthorized_(body.token, settings)) return { ok: false, error: 'unauthorized' };
 
-  const actions = { day: saveDay_, transferred: markTransferred_ };
+  const actions = {
+    day: saveDay_,
+    transferred: markTransferred_,
+    plant: savePlant_,
+    remove_plant: removePlant_,
+    water: waterPlant_,
+    unwater: unwaterPlant_,
+  };
   const action = actions[body.action || 'day'];
   if (!action) return { ok: false, error: 'unknown_action' };
 

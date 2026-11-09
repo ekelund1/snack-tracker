@@ -6,6 +6,7 @@ const KEYS = {
   days: 'snack.days',
   settings: 'snack.settings',
   milestones: 'snack.milestones',
+  plants: 'plant.plants',
 };
 
 // Used until the first successful read from the server.
@@ -102,6 +103,13 @@ export function createStore(storage) {
       if (claimed.includes(key)) return false;
       write(KEYS.milestones, JSON.stringify([...claimed, key]));
       return true;
+    },
+
+    // Plant-Life's board as last seen, so it shows at once, even offline.
+    getPlants: () => readJson(KEYS.plants, []),
+
+    savePlants(plants) {
+      write(KEYS.plants, JSON.stringify(plants));
     },
   };
 }
